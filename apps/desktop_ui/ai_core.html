@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>phone-copilot AI core</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="layout training-layout">
+      <section id="haltBanner" class="halt-banner hidden">
+        <strong>AI Core</strong>
+        <span id="haltBannerText"></span>
+      </section>
+
+      <section class="hero training-hero">
+        <div>
+          <p class="eyebrow">Local AI Core</p>
+          <h1>AI Core</h1>
+          <p class="subtitle">Inspect the local files, training data, correction store, vector database, retrieval config, and safety state used by drafting.</p>
+          <nav class="top-nav" aria-label="Main navigation">
+            <a class="nav-link" href="/">Live Phone</a>
+            <a class="nav-link" href="/training/simple">Simple Training</a>
+            <a class="nav-link" href="/training">Advanced Training</a>
+            <a class="nav-link" href="/ai-core">AI Core</a>
+            <a class="nav-link" href="/ai-core/vector-map">Vector Map</a>
+          </nav>
+          <nav class="top-nav" aria-label="Cyber operations navigation">
+            <a class="nav-link" href="/mission-control">Mission Control</a>
+            <a class="nav-link" href="/execution-trace">Execution Trace</a>
+            <a class="nav-link" href="/signal-replay">Signal Replay</a>
+            <a class="nav-link" href="/vision-layer">Vision Layer</a>
+            <a class="nav-link" href="/memory-inspector">Memory Inspector</a>
+            <a class="nav-link" href="/risk-engine">Risk Engine</a>
+          </nav>
+        </div>
+        <div class="status-card" id="coreStats">
+          <div><span>Active rows</span><strong>0</strong></div>
+          <div><span>Vector rows</span><strong>0</strong></div>
+        </div>
+      </section>
+
+      <section class="core-grid">
+        <article class="panel">
+          <div class="panel-header">
+            <h2>Files</h2>
+            <button id="refreshCoreButton" class="secondary" type="button">Refresh</button>
+          </div>
+          <div id="coreFiles" class="stack"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Training Data</h2>
+          <div id="trainingData" class="stack"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Vector Database</h2>
+          <a class="nav-link" href="/ai-core/vector-map">Open 3D Vector Map</a>
+          <div id="vectorData" class="stack"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <h2>Identity Pack</h2>
+            <button id="reloadIdentityButton" class="secondary" type="button">Reload</button>
+          </div>
+          <div id="identityData" class="stack"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Retrieval Config</h2>
+          <pre id="retrievalConfig" class="core-pre"></pre>
+        </article>
+
+        <article class="panel">
+          <h2>Safety</h2>
+          <div id="safetyData" class="stack"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Providers</h2>
+          <div id="providerData" class="stack"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Provider Compare</h2>
+          <div class="training-form">
+            <label>
+              Message
+              <textarea id="providerCompareIncoming" rows="3">u coming?</textarea>
+            </label>
+            <label>
+              Context
+              <textarea id="providerCompareContext" rows="3"></textarea>
+            </label>
+            <label>
+              Providers
+              <input id="providerCompareProviders" type="text" value="ollama,gemini,groq,openrouter" />
+            </label>
+            <button id="providerCompareButton" class="primary" type="button">Run Compare</button>
+          </div>
+          <div id="providerCompareResults" class="stack"></div>
+        </article>
+      </section>
+    </main>
+    <script src="/ai_core.js" defer></script>
+  </body>
+</html>

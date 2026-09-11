@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>phone-copilot training</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="layout training-layout">
+      <section id="haltBanner" class="halt-banner hidden">
+        <strong>Training</strong>
+        <span id="haltBannerText"></span>
+      </section>
+
+      <section class="hero training-hero">
+        <div>
+          <p class="eyebrow">Offline Supervised Training</p>
+          <h1>Training</h1>
+          <p class="subtitle">Simulate incoming messages, rate candidates, and save corrections without touching the phone.</p>
+          <nav class="top-nav" aria-label="Main navigation">
+            <a class="nav-link" href="/">Live Phone</a>
+            <a class="nav-link" href="/training/simple">Simple Training</a>
+            <a class="nav-link" href="/training">Advanced Training</a>
+            <a class="nav-link" href="/ai-core">AI Core</a>
+            <a class="nav-link" href="/ai-core/vector-map">Vector Map</a>
+          </nav>
+          <nav class="top-nav" aria-label="Cyber operations navigation">
+            <a class="nav-link" href="/mission-control">Mission Control</a>
+            <a class="nav-link" href="/execution-trace">Execution Trace</a>
+            <a class="nav-link" href="/signal-replay">Signal Replay</a>
+            <a class="nav-link" href="/vision-layer">Vision Layer</a>
+            <a class="nav-link" href="/memory-inspector">Memory Inspector</a>
+            <a class="nav-link" href="/risk-engine">Risk Engine</a>
+          </nav>
+          <nav class="top-nav training-jump-nav" aria-label="Training shortcuts">
+            <a class="nav-link" href="#autonomous-training-loop">Autonomous Loop</a>
+            <a class="nav-link" href="#training-control">Training Control</a>
+            <a class="nav-link" href="#style-review-queue">Style Review Queue</a>
+          </nav>
+        </div>
+        <div class="status-card" id="trainingStats">
+          <div><span>Corrections</span><strong>0</strong></div>
+          <div><span>Vector rows</span><strong>0</strong></div>
+        </div>
+      </section>
+
+      <section class="training-grid">
+        <article class="panel">
+          <h2>Chat Simulator</h2>
+          <label>Incoming message</label>
+          <textarea id="incomingInput" class="text-input correction-textarea">hii</textarea>
+          <label>Context</label>
+          <textarea id="contextInput" class="text-input correction-textarea" placeholder="One previous message per line"></textarea>
+          <div class="status-grid">
+            <div>
+              <label>Contact</label>
+              <input id="contactInput" class="text-input" placeholder="Optional" />
+            </div>
+            <div>
+              <label>Relationship</label>
+              <select id="relationshipSelect"></select>
+            </div>
+            <div>
+              <label>Intent</label>
+              <select id="intentSelect"></select>
+            </div>
+            <div>
+              <label>Diversity</label>
+              <select id="diversitySelect"></select>
+            </div>
+          </div>
+          <div class="status-grid parameter-grid" id="parameterGrid"></div>
+          <div class="button-row">
+            <button id="chatButton" class="primary" type="button">Generate</button>
+            <button id="regenerateButton" class="secondary" type="button">Regenerate</button>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h2>Candidate Replies</h2>
+          <div id="candidateList" class="stack"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Training Data Editor</h2>
+          <label>Correct reply</label>
+          <textarea id="correctReplyInput" class="text-input correction-textarea"></textarea>
+          <label>Why was AI wrong?</label>
+          <input id="wrongReasonInput" class="text-input" placeholder="too formal, missed context..." />
+          <label>Notes</label>
+          <textarea id="notesInput" class="text-input correction-textarea"></textarea>
+          <label><input id="saveCorrectionsCheckbox" type="checkbox" checked /> Add to corrections</label>
+          <label><input id="addVectorCheckbox" type="checkbox" checked /> Add to vector DB after saving</label>
+          <label><input id="preferContactCheckbox" type="checkbox" /> Prefer this style for this contact</label>
+          <div class="button-row">
+            <button id="saveFeedbackButton" class="primary" type="button">Save training example</button>
+            <button id="rebuildVectorButton" class="secondary" type="button">Rebuild vector DB</button>
+          </div>
+          <h3>Recent Feedback</h3>
+          <div id="recentFeedback" class="stack"></div>
+        </article>
+      </section>
+
+      <section class="training-grid">
+        <article class="panel" id="autonomous-training-loop">
+          <h2>Autonomous Training Loop</h2>
+          <p class="summary">Auto-training generates review candidates only. It does not approve or send anything.</p>
+          <div id="trainingLoopStats" class="status-grid"></div>
+          <div class="status-grid">
+            <div>
+              <label>Interval</label>
+              <select id="loopIntervalSelect">
+                <option value="5">5 minutes</option>
+                <option value="15">15 minutes</option>
+                <option value="30" selected>30 minutes</option>
+                <option value="60">60 minutes</option>
+              </select>
+            </div>
+            <div>
+              <label>Max cases</label>
+              <input id="loopMaxCasesInput" class="text-input" type="number" min="1" max="1000" value="100" />
+            </div>
+            <div>
+              <label>Max candidates</label>
+              <input id="loopMaxCandidatesInput" class="text-input" type="number" min="1" max="500" value="25" />
+            </div>
+            <label><input id="loopAutoRebuildCheckbox" type="checkbox" checked /> Auto rebuild after approval</label>
+            <label><input id="loopQuietHoursCheckbox" type="checkbox" /> Quiet hours</label>
+          </div>
+          <div class="button-row">
+            <button id="startTrainingLoopButton" class="primary" type="button">Start loop</button>
+            <button id="stopTrainingLoopButton" class="secondary" type="button">Stop loop</button>
+            <button id="runTrainingLoopNowButton" class="secondary" type="button">Run now</button>
+            <button id="saveTrainingLoopConfigButton" class="secondary" type="button">Save loop config</button>
+          </div>
+          <pre id="trainingLoopLog" class="debug-log">Autonomous loop idle.</pre>
+        </article>
+
+        <article class="panel" id="training-control">
+          <h2>Training Control</h2>
+          <div id="trainingControlStats" class="status-grid"></div>
+          <div class="button-row">
+            <button id="runEvaluationButton" class="secondary" type="button">Run evaluation</button>
+            <button id="generateImprovementsButton" class="secondary" type="button">Generate improvement candidates</button>
+            <button id="controlRebuildVectorButton" class="secondary" type="button">Rebuild vector DB</button>
+            <button id="runIterationButton" class="primary" type="button">Run full training iteration</button>
+          </div>
+          <pre id="trainingControlLog" class="debug-log">No training control action run yet.</pre>
+        </article>
+
+        <article class="panel" id="style-review-queue">
+          <h2>Style Review Queue</h2>
+          <p class="summary">Auto-improved replies wait here for approval before they can enter corrections.</p>
+          <div class="button-row">
+            <button id="refreshReviewQueueButton" class="secondary" type="button">Refresh queue</button>
+          </div>
+          <div id="styleReviewQueue" class="stack"></div>
+        </article>
+      </section>
+    </main>
+    <script src="/training.js" defer></script>
+  </body>
+</html>

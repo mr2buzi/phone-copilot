@@ -1,0 +1,19 @@
+{
+  "message_packages": [
+    "com.google.android.apps.messaging",
+    "com.whatsapp",
+    "com.samsung.android.messaging",
+    "com.instagram.android"
+  ],
+  "gallery_packages": [
+    "com.google.android.apps.photos",
+    "com.sec.android.gallery3d",
+    "com.android.documentsui"
+  ],
+  "permission_keywords": [
+    "allow",
+    "don't allow",
+    "while using the app",
+    "permission"
+  ]
+}

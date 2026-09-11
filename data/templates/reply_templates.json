@@ -1,0 +1,13 @@
+{
+  "tone": "warm, concise, owner-approved",
+  "reply_prefixes": [
+    "yeah calm",
+    "safe",
+    "sounds alright"
+  ],
+  "closers": [
+    "ill lyk",
+    "say less",
+    "calm"
+  ]
+}

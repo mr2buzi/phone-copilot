@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>phone-copilot simple training</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="layout training-layout">
+      <section id="haltBanner" class="halt-banner hidden">
+        <strong>Training</strong>
+        <span id="haltBannerText"></span>
+      </section>
+
+      <section class="hero training-hero">
+        <div>
+          <p class="eyebrow">Simple Offline Training</p>
+          <h1>Simple Training</h1>
+          <p class="subtitle">Generate replies, click what is wrong, edit the reply, and save feedback. No phone sending happens here.</p>
+          <nav class="top-nav" aria-label="Main navigation">
+            <a class="nav-link" href="/">Live Phone</a>
+            <a class="nav-link" href="/training/simple">Simple Training</a>
+            <a class="nav-link" href="/training">Advanced Training</a>
+            <a class="nav-link" href="/ai-core">AI Core</a>
+            <a class="nav-link" href="/ai-core/vector-map">Vector Map</a>
+          </nav>
+          <nav class="top-nav" aria-label="Cyber operations navigation">
+            <a class="nav-link" href="/mission-control">Mission Control</a>
+            <a class="nav-link" href="/execution-trace">Execution Trace</a>
+            <a class="nav-link" href="/signal-replay">Signal Replay</a>
+            <a class="nav-link" href="/vision-layer">Vision Layer</a>
+            <a class="nav-link" href="/memory-inspector">Memory Inspector</a>
+            <a class="nav-link" href="/risk-engine">Risk Engine</a>
+          </nav>
+        </div>
+        <div class="status-card" id="trainingStats">
+          <div><span>Corrections</span><strong>0</strong></div>
+          <div><span>Vector rows</span><strong>0</strong></div>
+        </div>
+      </section>
+
+      <section class="simple-training-grid">
+        <article class="panel">
+          <h2>Message</h2>
+          <label>Incoming message</label>
+          <textarea id="incomingInput" class="text-input correction-textarea">hii</textarea>
+          <div class="status-grid">
+            <div>
+              <label>Relationship</label>
+              <select id="relationshipSelect"></select>
+            </div>
+            <div>
+              <label>Intent</label>
+              <select id="intentSelect"></select>
+            </div>
+          </div>
+          <div class="button-row">
+            <button id="chatButton" class="primary" type="button">Generate</button>
+            <button id="regenerateButton" class="secondary" type="button">Regenerate</button>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h2>Replies</h2>
+          <div id="candidateList" class="stack"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Correction</h2>
+          <label>Correct reply</label>
+          <textarea id="correctReplyInput" class="text-input correction-textarea"></textarea>
+          <label>Notes</label>
+          <textarea id="notesInput" class="text-input correction-textarea"></textarea>
+          <label><input id="saveCorrectionsCheckbox" type="checkbox" checked /> Add to corrections</label>
+          <label><input id="addVectorCheckbox" type="checkbox" checked /> Add to vector DB after saving</label>
+          <button id="saveFeedbackButton" class="primary" type="button">Save feedback</button>
+        </article>
+      </section>
+    </main>
+    <script src="/training_simple.js" defer></script>
+  </body>
+</html>

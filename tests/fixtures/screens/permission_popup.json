@@ -1,0 +1,11 @@
+{
+  "package_name": "com.android.permissioncontroller",
+  "activity_name": ".GrantPermissionsActivity",
+  "visible_text": [
+    "Allow Messages to access photos and videos?",
+    "While using the app",
+    "Don't allow"
+  ],
+  "screenshot_width": 1080,
+  "screenshot_height": 2340
+}

@@ -1,0 +1,15 @@
+{
+  "package_name": "com.google.android.apps.messaging",
+  "activity_name": ".main.MainActivity",
+  "visible_text": [],
+  "screenshot_width": 1080,
+  "screenshot_height": 2340,
+  "keyboard_visible": null,
+  "keyboard_height": null,
+  "keyboard_ambiguous": true,
+  "visual_features": {
+    "top_band_brightness": 39.00239748677249,
+    "bottom_band_variance": 1403.8124576273656,
+    "center_variance": 1099.2764863059704
+  }
+}

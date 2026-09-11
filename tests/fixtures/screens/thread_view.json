@@ -1,0 +1,13 @@
+{
+  "package_name": "com.google.android.apps.messaging",
+  "activity_name": ".ConversationActivity",
+  "visible_text": [
+    "Alex",
+    "Lunch tomorrow?",
+    "Sure, noon works",
+    "Type a message",
+    "Send"
+  ],
+  "screenshot_width": 1080,
+  "screenshot_height": 2340
+}

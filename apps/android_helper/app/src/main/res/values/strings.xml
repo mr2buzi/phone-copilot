@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Phone Copilot Helper</string>
+    <string name="service_name">Phone Copilot Notifications</string>
+    <string name="setup_intro">This helper forwards sanitized notification metadata to the local phone-copilot controller. It does not use Accessibility Services.</string>
+    <string name="setup_steps">1. Connect your own phone over ADB.\n2. Run adb reverse tcp:8765 tcp:8765.\n3. Start the desktop controller.\n4. Enable notification access for this app in Android settings.</string>
+</resources>

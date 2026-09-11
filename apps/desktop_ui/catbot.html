@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>catbot</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="catbot-body">
+    <main class="catbot-shell">
+      <div class="catbot-thread-bar">
+        <small id="catbotThreadId">thread: new</small>
+        <small id="catbotBatchStatus" class="catbot-batch-status"></small>
+        <button id="catbotResetThread" class="secondary compact-button" type="button">Reset thread</button>
+      </div>
+      <section id="catbotMessages" class="catbot-messages" aria-live="polite"></section>
+      <form id="catbotForm" class="catbot-input-row">
+        <input id="catbotInput" class="catbot-input" autocomplete="off" placeholder="message" />
+        <button class="primary" type="submit">Send</button>
+      </form>
+      <script id="catbotLastRoutePayload" type="application/json">{}</script>
+    </main>
+    <script src="/catbot.js?v=multi-message-batch" defer></script>
+  </body>
+</html>

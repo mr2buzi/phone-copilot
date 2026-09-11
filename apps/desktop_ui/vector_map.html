@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>phone-copilot vector map</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="vector-map-body">
+    <main class="vector-map-page">
+      <section class="vector-map-stage" aria-label="AI memory vector database visualisation">
+        <canvas id="vectorCanvas" aria-label="3D vector database map"></canvas>
+        <div id="vectorTooltip" class="vector-tooltip hidden"></div>
+
+        <header class="vector-map-topbar">
+          <div>
+            <p class="eyebrow">AI Memory Core</p>
+            <h1>Vector Universe</h1>
+            <p class="vector-subtitle">Real examples, corrections, and safe fallback templates projected as the system's memory space.</p>
+          </div>
+          <nav class="top-nav vector-nav" aria-label="Main navigation">
+            <a class="nav-link" href="/">Live Phone</a>
+            <a class="nav-link" href="/training/simple">Simple Training</a>
+            <a class="nav-link" href="/training">Advanced Training</a>
+            <a class="nav-link" href="/ai-core">AI Core</a>
+            <a class="nav-link" href="/ai-core/vector-map">Vector Map</a>
+          </nav>
+          <nav class="top-nav vector-nav" aria-label="Cyber operations navigation">
+            <a class="nav-link" href="/mission-control">Mission Control</a>
+            <a class="nav-link" href="/execution-trace">Execution Trace</a>
+            <a class="nav-link" href="/signal-replay">Signal Replay</a>
+            <a class="nav-link" href="/vision-layer">Vision Layer</a>
+            <a class="nav-link" href="/memory-inspector">Memory Inspector</a>
+            <a class="nav-link" href="/risk-engine">Risk Engine</a>
+          </nav>
+        </header>
+
+        <aside class="vector-map-controls" aria-label="Vector map controls">
+          <details open>
+            <summary>View</summary>
+            <div class="vector-button-row">
+              <button id="fitDataButton" type="button">Fit</button>
+              <button id="resetCameraButton" type="button">Reset</button>
+              <button id="fullscreenButton" type="button">Fullscreen</button>
+            </div>
+            <label class="vector-toggle">
+              <input id="autoRotateToggle" type="checkbox" checked />
+              <span>Auto rotate</span>
+            </label>
+            <label>
+              Spread
+              <input id="spreadSlider" type="range" min="0.8" max="2.8" value="1.55" step="0.05" />
+            </label>
+          </details>
+
+          <details open>
+            <summary>Colour</summary>
+            <label>
+              Colour mode
+              <select id="colorMode">
+                <option value="intent">Intent</option>
+                <option value="relationship">Relationship</option>
+                <option value="source">Source</option>
+                <option value="memory">Memory type</option>
+                <option value="authority">Authority</option>
+                <option value="cluster">Cluster</option>
+              </select>
+            </label>
+          </details>
+
+          <details open>
+            <summary>Motion</summary>
+            <label>
+              Motion mode
+              <select id="motionMode">
+                <option value="drift">Idle drift</option>
+                <option value="float">Float</option>
+                <option value="cluster_orbit">Cluster orbit</option>
+                <option value="still">Still</option>
+              </select>
+            </label>
+            <label class="vector-toggle">
+              <input id="neighbourToggle" type="checkbox" checked />
+              <span>Nearest neighbours</span>
+            </label>
+          </details>
+
+          <details open>
+            <summary>Data filters</summary>
+            <label>
+              Search
+              <input id="vectorSearch" type="search" placeholder="hii, planning, Ali..." />
+            </label>
+            <div class="control-row two">
+              <label>
+                Relationship
+                <select id="relationshipFilter">
+                  <option value="all">All</option>
+                </select>
+              </label>
+              <label>
+                Intent
+                <select id="intentFilter">
+                  <option value="all">All</option>
+                </select>
+              </label>
+            </div>
+            <label>
+              Memory type
+              <select id="memoryTypeFilter">
+                <option value="all">All</option>
+                <option value="reply_example">Reply examples</option>
+                <option value="thread_episode">Thread episodes</option>
+              </select>
+            </label>
+            <label>
+              Source
+              <select id="sourceFilter">
+                <option value="all">All</option>
+                <option value="correction">Corrections</option>
+                <option value="real">Real</option>
+                <option value="synthetic">Synthetic</option>
+                <option value="thread_episode">Thread episodes</option>
+              </select>
+            </label>
+            <label class="vector-toggle">
+              <input id="syntheticToggle" type="checkbox" checked />
+              <span>Show synthetic fallback</span>
+            </label>
+          </details>
+
+          <details>
+            <summary>Debug</summary>
+            <div class="status-grid vector-stats" id="vectorStats">
+              <div><span>Points</span><strong>0</strong></div>
+              <div><span>Visible</span><strong>0</strong></div>
+              <div><span>Clusters</span><strong>0</strong></div>
+              <div><span>Source</span><strong>...</strong></div>
+            </div>
+          </details>
+        </aside>
+
+        <aside class="vector-map-inspector" id="vectorInspector">
+          <p class="eyebrow">Selected Memory</p>
+          <h2>Click a node</h2>
+          <p class="summary">Corrections and training-page feedback glow strongest. Synthetic templates stay dim as fallback coverage.</p>
+        </aside>
+
+        <aside class="vector-cluster-card" id="clusterCard">
+          <p class="eyebrow">Cluster</p>
+          <h2>Memory field</h2>
+          <p class="summary">Hover or select a node to see its local intent and relationship cluster.</p>
+        </aside>
+
+        <div class="vector-map-legend" id="vectorLegend"></div>
+      </section>
+    </main>
+    <script src="/vector_map.js" defer></script>
+  </body>
+</html>

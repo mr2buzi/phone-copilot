@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>phone-copilot</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section id="haltBanner" class="halt-banner hidden">
+        <strong>System Halted</strong>
+        <span id="haltBannerText">Unknown or unsafe state detected.</span>
+      </section>
+
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Supervised Owner-Only Assistant</p>
+          <h1>phone-copilot</h1>
+          <p class="subtitle">
+            Observe your unlocked Samsung S23 over ADB, draft replies locally, and require manual approval for every outbound action.
+          </p>
+          <nav class="top-nav" aria-label="Main navigation">
+            <a class="nav-link" href="/">Live Phone</a>
+            <a class="nav-link" href="/training/simple">Simple Training</a>
+            <a class="nav-link" href="/training">Advanced Training</a>
+            <a class="nav-link" href="/ai-core">AI Core</a>
+            <a class="nav-link" href="/ai-core/vector-map">Vector Map</a>
+          </nav>
+          <nav class="top-nav" aria-label="Cyber operations navigation">
+            <a class="nav-link" href="/mission-control">Mission Control</a>
+            <a class="nav-link" href="/execution-trace">Execution Trace</a>
+            <a class="nav-link" href="/signal-replay">Signal Replay</a>
+            <a class="nav-link" href="/vision-layer">Vision Layer</a>
+            <a class="nav-link" href="/memory-inspector">Memory Inspector</a>
+            <a class="nav-link" href="/risk-engine">Risk Engine</a>
+          </nav>
+        </div>
+        <div class="status-card">
+          <div><span>App</span><strong id="appName">Unknown</strong></div>
+          <div><span>Screen</span><strong id="screenName">unknown_screen</strong></div>
+          <div><span>Keyboard</span><strong id="keyboardState">Unknown</strong></div>
+          <div><span>Status</span><strong id="haltStatus">Review</strong></div>
+          <div class="confidence-block">
+            <span>Confidence</span>
+            <strong id="confidence">0.00</strong>
+            <div class="meter"><div id="confidenceBar" class="meter-fill"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="panel screenshot-panel">
+          <div class="panel-header">
+            <h2>Live Screenshot</h2>
+            <button id="refreshButton" class="secondary">Refresh</button>
+          </div>
+          <img id="screenshot" alt="Phone screenshot preview" />
+          <p id="haltReason" class="warning"></p>
+        </article>
+
+        <article class="panel">
+          <h2>System State</h2>
+          <div class="metric-grid">
+            <div><span>Loop latency</span><strong id="loopLatency">0 ms</strong></div>
+            <div><span>Screenshot</span><strong id="shotLatency">0 ms</strong></div>
+            <div><span>OCR</span><strong id="ocrLatency">0 ms</strong></div>
+            <div><span>Classification</span><strong id="classificationLatency">0 ms</strong></div>
+            <div><span>Planner</span><strong id="plannerLatency">0 ms</strong></div>
+            <div><span>Execution</span><strong id="executionLatency">0 ms</strong></div>
+          </div>
+          <div class="last-action-card">
+            <span>Last action</span>
+            <strong id="lastAction">None</strong>
+            <p id="lastActionResult" class="summary">No execution yet.</p>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h2>Visible Messages</h2>
+          <p id="summary" class="summary"></p>
+          <p id="composePreview" class="summary"></p>
+          <ul id="messages" class="stack"></ul>
+        </article>
+
+        <article class="panel">
+          <h2>Reply Suggestions</h2>
+          <div id="replySuggestions" class="stack"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Reply Quality</h2>
+          <div id="replyQuality" class="stack"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Correction Learning</h2>
+          <textarea id="editedReplyInput" class="text-input correction-textarea" placeholder="Edit the selected reply here"></textarea>
+          <div class="feedback-grid">
+            <button type="button" class="secondary feedback-reason selected" data-reason="too formal">Too formal</button>
+            <button type="button" class="secondary feedback-reason" data-reason="too long">Too long</button>
+            <button type="button" class="secondary feedback-reason" data-reason="not me">Not me</button>
+            <button type="button" class="secondary feedback-reason" data-reason="missed context">Missed context</button>
+            <button type="button" class="secondary feedback-reason" data-reason="risky">Risky</button>
+            <button type="button" class="secondary feedback-reason" data-reason="other">Other</button>
+          </div>
+          <button id="saveCorrectionButton" class="primary" type="button">Save my edit as training example</button>
+        </article>
+
+        <article class="panel actions-panel">
+          <h2>Approval Controls</h2>
+          <button id="approveTypeButton" class="primary">Approve selected draft</button>
+          <button id="sendDraftButton" class="secondary">Approve send current draft</button>
+          <button id="rejectButton" class="secondary">Reject</button>
+          <button id="stopButton" class="danger">Emergency Stop</button>
+          <p class="note">Outbound actions remain blocked after emergency stop. Unknown or ambiguous screens always halt the system.</p>
+        </article>
+
+        <article class="panel">
+          <h2>Unread Queue</h2>
+          <div id="unreadQueue" class="stack"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Thread Context</h2>
+          <div id="threadContext" class="stack"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Automation Control</h2>
+          <div id="automationStatus" class="stack"></div>
+        </article>
+
+        <article class="panel">
+          <h2>Verification Errors</h2>
+          <div id="verificationErrors" class="stack"></div>
+        </article>
+      </section>
+    </main>
+    <script src="/app.js" defer></script>
+  </body>
+</html>

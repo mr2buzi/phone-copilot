@@ -1,0 +1,13 @@
+{
+  "package_name": "com.google.android.apps.messaging",
+  "activity_name": ".main.MainActivity",
+  "visible_text": [
+    "Messages",
+    "Search",
+    "Archived",
+    "Friends",
+    "Family"
+  ],
+  "screenshot_width": 1080,
+  "screenshot_height": 2340
+}

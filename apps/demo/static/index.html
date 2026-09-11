@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Phone Copilot | Demo</title>
+    <link rel="stylesheet" href="/assets/style.css" />
+    <script src="/assets/app.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <span class="mark" aria-hidden="true">PC</span>
+        <h1>Phone Copilot</h1>
+      </div>
+      <span class="session">Demo session</span>
+    </header>
+    <main>
+      <div class="toolbar">
+        <label for="scenario"
+          >Conversation
+          <select id="scenario" disabled></select></label
+        ><button id="reset">Reset session</button>
+      </div>
+      <div class="workspace">
+        <section class="conversation" aria-labelledby="contact">
+          <div class="section-head">
+            <span class="eyebrow">CONTEXT</span
+            ><span class="pill">Synthetic data</span>
+          </div>
+          <h2 id="contact">Loading</h2>
+          <p id="relationship" class="muted"></p>
+          <div class="messages" id="messages"></div>
+          <div class="approval" id="approval" hidden>
+            <span class="eyebrow">APPROVED LOCALLY</span>
+            <p id="approved-text"></p>
+            <span class="muted">Delivery disabled</span>
+          </div>
+          <div class="conversation-footer">
+            <span class="dot"></span> Device disconnected
+          </div>
+        </section>
+        <section class="drafting" aria-labelledby="draft-heading">
+          <div class="section-head">
+            <span class="eyebrow">REVIEW QUEUE</span
+            ><span id="generation" class="muted">Deterministic engine</span>
+          </div>
+          <div class="draft-head">
+            <h2 id="draft-heading">Reply candidates</h2>
+            <button class="primary" id="generate" disabled>
+              Generate drafts
+            </button>
+          </div>
+          <p id="status" role="status" aria-live="polite">Ready</p>
+          <div id="candidates" class="candidates"></div>
+          <details id="detail">
+            <summary>Score breakdown</summary>
+            <pre id="scores">No draft selected</pre>
+          </details>
+        </section>
+      </div>
+      <section class="trace" aria-labelledby="trace-heading">
+        <div class="section-head">
+          <h2 id="trace-heading">Execution trace</h2>
+          <span id="elapsed" class="muted">Idle</span>
+        </div>
+        <ol id="stages">
+          <li>
+            <span>01</span><strong>Context</strong
+            ><small>3 sample scenarios</small>
+          </li>
+          <li>
+            <span>02</span><strong>Retrieval</strong
+            ><small>Local examples</small>
+          </li>
+          <li>
+            <span>03</span><strong>Draft &amp; rank</strong
+            ><small>Awaiting input</small>
+          </li>
+          <li>
+            <span>04</span><strong>Approval</strong
+            ><small>Review required</small>
+          </li>
+        </ol>
+      </section>
+      <footer>
+        <span>External providers <b>OFF</b></span
+        ><span>Phone delivery <b>OFF</b></span
+        ><span>Private data <b>NONE LOADED</b></span
+        ><a href="https://github.com/mr2buzi/phone-copilot">Source on GitHub</a>
+      </footer>
+    </main>
+  </body>
+</html>
