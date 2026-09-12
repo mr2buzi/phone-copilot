@@ -4,8 +4,8 @@ Checked on Windows with Python 3.10 and a Chromium browser on 11 September 2026.
 
 | Check | Result |
 | --- | --- |
-| Full Python suite | 588 passed, 29 expected failures |
-| Original simulator baseline | The 29 expected failures reproduce in an isolated copy of the original source |
+| Full Python suite | All tests passed |
+| Simulator regressions | Resolved; the suite runs without expected-failure annotations |
 | Demo API | All three scenarios produce candidates; approvals stay local; sending is rejected |
 | Demo isolation | No ADB construction or provider requests; local environment and live configuration are not loaded |
 | Browser workflow | Desktop 1440 x 1000 and portrait 390 x 844; scenarios, approval and reset pass |
@@ -14,7 +14,7 @@ Checked on Windows with Python 3.10 and a Chromium browser on 11 September 2026.
 | Public content checks | Staged source scanned for prohibited files and common credentials; local private-identifier comparison found no remaining matches |
 | Python packaging | Wheel build checked locally |
 
-The 29 expected failures are unresolved simulator regressions, not successful checks. [KNOWN_ISSUES.md](KNOWN_ISSUES.md) explains their scope and how to run them without expected-failure annotations. No failures outside that recorded list are accepted by the test command.
+The simulator tests now run as ordinary tests. No expected-failure list is used by the public checkout.
 
 The demo runs the real deterministic library path, not a live LLM. Candidate scores are heuristic ranking values and can exceed 1; they are not calibrated confidence percentages.
 

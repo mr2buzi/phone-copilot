@@ -905,6 +905,7 @@ def validate_reply_against_plan(reply: str, plan: ReplyPlan) -> str:
                 "killed me",
                 "tired",
                 "half asleep",
+                "on my feet",
                 "brain",
                 "lying",
                 "laying",

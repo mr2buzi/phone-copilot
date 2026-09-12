@@ -70,7 +70,7 @@ python scripts/check_public_release.py --revision HEAD
 
 The test suite covers drafting, policy checks, provider adapters, state, training, execution verification and demo isolation. [VALIDATION.md](docs/VALIDATION.md) records the checks performed for this release and their limits.
 
-Current local result: **588 passed, 29 expected failures**. The expected failures are existing advanced-simulator regressions, documented in [KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
+Current local result: **all tests pass**. The simulator, policy, provider, execution and demo checks run without expected-failure annotations.
 
 ## Project notes
 

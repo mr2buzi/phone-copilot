@@ -2644,10 +2644,7 @@ class DraftingService:
     ) -> list[str]:
         latest = normalize_text(recent_messages[-1]) if recent_messages else ""
         if hook_mode == "basic_get_to_know":
-            if relationship_type in {"unknown", "professional", "family", "university"}:
-                pool = ["yo what u saying", "heyy what u doing", "yo how u been"]
-            else:
-                pool = ["yo wdyll", "where u from", "how old r u"]
+            pool = ["yo what u saying", "heyy what u doing", "yo how u been"]
         elif bool(self._repair_context(recent_messages)["repair_required"]):
             pool = self._repair_reply_pool(recent_messages[-1] if recent_messages else "")
         elif bool(self._continuation_context(recent_messages, contact_name=contact_name)["continuation_required"]):

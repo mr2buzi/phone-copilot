@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from io import BytesIO
 from pathlib import Path
-import json
 
 import pytest
 from PIL import Image
@@ -10,16 +9,6 @@ from PIL import Image
 from apps.controller.service import PhoneCopilotService
 from apps.controller.settings import ControllerSettings
 from libs.adb import ForegroundApp, KeyboardState
-
-
-def pytest_collection_modifyitems(items):
-    known = set(json.loads((Path(__file__).parent / "known_regressions.json").read_text(encoding="utf-8")))
-    for item in items:
-        if item.nodeid in known:
-            item.add_marker(pytest.mark.xfail(
-                strict=True,
-                reason="Existing simulator regression reproduced in source baseline; see docs/KNOWN_ISSUES.md",
-            ))
 
 
 class MockADBClient:

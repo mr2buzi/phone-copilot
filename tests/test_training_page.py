@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -69,6 +70,69 @@ def _isolated_service(tmp_path: Path, mock_adb) -> PhoneCopilotService:
 @pytest.fixture()
 def training_service(tmp_path: Path, mock_adb) -> PhoneCopilotService:
     return _isolated_service(tmp_path, mock_adb)
+
+
+@pytest.fixture()
+def provider_path(training_service: PhoneCopilotService, monkeypatch) -> None:
+    # Exercise provider handling when no direct local reply is available.
+    monkeypatch.setattr(training_service, "_catbot_direct_plan_reply", lambda *args, **kwargs: "")
+
+
+@pytest.fixture()
+def provider_retry_path(training_service: PhoneCopilotService, monkeypatch, provider_path) -> None:
+    # Exhaust local repairs so the route must validate a provider retry.
+    monkeypatch.setattr(training_service, "_catbot_plan_specific_repair_reply", lambda *args, **kwargs: "")
+
+
+@pytest.mark.parametrize("local_reply", ["", "okay"])
+@pytest.mark.parametrize("provider_failed", [False, True])
+def test_catbot_provider_retry_recovers_after_unusable_plan(
+    training_service: PhoneCopilotService, monkeypatch, provider_path, local_reply, provider_failed,
+) -> None:
+    calls = []
+
+    async def generate(**kwargs):
+        calls.append(kwargs)
+        failed = provider_failed and len(calls) == 1
+        return (
+            type("FakeResponse", (), {
+                "text": "okay" if len(calls) == 1 else "missed u too / been thinking about u all day",
+                "provider": "fallback" if failed else "gemini",
+                "model": "fake-model",
+                "latency_ms": 1,
+                "error": "temporary outage" if failed else None,
+                "external_api_used": not failed,
+            })(),
+            {"provider_configured": True, "manual_review_fallback": failed},
+        )
+
+    monkeypatch.setattr("apps.controller.service.generate_with_fallback", generate)
+    monkeypatch.setattr(training_service, "_catbot_plan_specific_repair_reply", lambda *args, **kwargs: local_reply)
+    response = training_service.training_catbot_chat(
+        CatbotChatRequest(incoming="i missed u", relationship_type="romantic_interest")
+    )
+    candidate = response["candidate"]
+    assert len(calls) == 2
+    assert response["reply_sequence"] == ["missed u too", "been thinking about u all day"]
+    assert candidate["provider"] == "gemini"
+    assert candidate["provider_error"] is None
+    assert candidate["fallback_used"] is False
+    assert candidate["manual_review_fallback"] is False
+    assert candidate["catbot_ai_plan_repair_attempted"] is True
+    assert candidate["catbot_ai_plan_repair_accepted"] is False
+    assert candidate["catbot_ai_retry_accepted"] is True
+    assert candidate["catbot_ai_reject_reason"] == ""
+
+
+@pytest.mark.parametrize(("incoming", "instruction"), [
+    ("do u miss me", "They are asking if you miss them"),
+    ("thinking of u", "They said they are thinking about you"),
+    ("i missed u", "They said they miss you"),
+])
+def test_catbot_affection_prompt_uses_classified_slots(training_service, incoming, instruction) -> None:
+    move = training_service._catbot_conversation_move(incoming=incoming, context=[])
+    assert move["user_move"] == "emotional_reciprocity"
+    assert instruction in training_service._catbot_conversation_move_instruction(move)
 
 
 def test_training_page_route_loads() -> None:
@@ -1180,7 +1244,7 @@ def test_whatsapp_web_ignored_hurt_burst_gets_capped_relationship_obligation(
         "Stop ignoring me man",
     ]
     messages = [
-        {"speaker": "other", "text": text, "timestamp": f"7:{5 + index:02d} p.m., 2026-06-06"}
+        {"speaker": "other", "text": text, "timestamp": datetime.now(timezone.utc).isoformat()}
         for index, text in enumerate(message_texts)
     ]
 
@@ -1196,6 +1260,7 @@ def test_whatsapp_web_ignored_hurt_burst_gets_capped_relationship_obligation(
     )
 
     assert {"conflict_or_hurt", "on_read_complaint"} <= set(obligation.conversation_move)
+    assert "story_share" not in obligation.conversation_move
     assert "relationship_conflict" in set(obligation.concrete_topics_detected)
     assert obligation.target_reply_burst_size == {"min": 8, "max": 14}
     assert "acknowledge_on_read_or_airing" in obligation.required_response_acts
@@ -3895,7 +3960,7 @@ def test_catbot_route_provider_stale_reply_rejected_for_missed_affection(trainin
     assert response["fallback_used"] is False
 
 
-def test_catbot_route_provider_failure_returns_502_without_fallback(training_service: PhoneCopilotService, monkeypatch) -> None:
+def test_catbot_route_provider_failure_returns_502_without_fallback(training_service: PhoneCopilotService, monkeypatch, provider_retry_path) -> None:
     calls = []
 
     async def fail_generate_with_fallback(**kwargs):
@@ -4291,7 +4356,7 @@ def test_catbot_route_desire_question_uses_romantic_escalation_plan(monkeypatch,
     ) == ""
 
 
-def test_catbot_ai_route_retries_explicit_body_request_with_detail(monkeypatch, training_service: PhoneCopilotService) -> None:
+def test_catbot_ai_route_retries_explicit_body_request_with_detail(monkeypatch, training_service: PhoneCopilotService, provider_retry_path) -> None:
     replies = iter([
         "you know exactly what i'd do with it then don't u",
         "come here then\ncock hard against u\ngrinding slow so u feel it\nmy mouth by ur ear",
@@ -4378,11 +4443,11 @@ def test_catbot_ai_retry_keeps_adult_acknowledgement_on_followup_instruction(mon
     assert "Adult story continuity" in prompts[-1]
 
 
-def test_catbot_ai_route_preserves_multiple_message_bubbles(monkeypatch, training_service: PhoneCopilotService) -> None:
+def test_catbot_ai_route_preserves_multiple_message_bubbles(monkeypatch, training_service: PhoneCopilotService, provider_retry_path) -> None:
     async def fake_generate_with_fallback(**kwargs):
         return (
             type("FakeResponse", (), {
-                "text": "come here then\nneed ur lips on me\nmy hands on ur hips\nteasing u slow",
+                "text": "come here then\ncock hard against u\ngrinding slow so u feel it\nmy mouth by ur ear",
                 "provider": "gemini",
                 "model": "fake-model",
                 "latency_ms": 1,
@@ -4404,15 +4469,15 @@ def test_catbot_ai_route_preserves_multiple_message_bubbles(monkeypatch, trainin
         )
     )
 
-    assert response["reply"] == "come here then / need ur lips on me / my hands on ur hips / teasing u slow"
-    assert response["reply_sequence"] == ["come here then", "need ur lips on me", "my hands on ur hips", "teasing u slow"]
-    assert response["candidate"]["sequence"] == ["come here then", "need ur lips on me", "my hands on ur hips", "teasing u slow"]
+    assert response["reply"] == "come here then / cock hard against u / grinding slow so u feel it / my mouth by ur ear"
+    assert response["reply_sequence"] == ["come here then", "cock hard against u", "grinding slow so u feel it", "my mouth by ur ear"]
+    assert response["candidate"]["sequence"] == ["come here then", "cock hard against u", "grinding slow so u feel it", "my mouth by ur ear"]
     assert response["viewer_messages"] == [
         {"speaker": "other", "text": "i need you"},
         {"speaker": "me", "text": "come here then"},
-        {"speaker": "me", "text": "need ur lips on me"},
-        {"speaker": "me", "text": "my hands on ur hips"},
-        {"speaker": "me", "text": "teasing u slow"},
+        {"speaker": "me", "text": "cock hard against u"},
+        {"speaker": "me", "text": "grinding slow so u feel it"},
+        {"speaker": "me", "text": "my mouth by ur ear"},
     ]
 
 
@@ -4445,8 +4510,8 @@ def test_catbot_ai_repair_replaces_rejected_sequence(training_service: PhoneCopi
     assert response["candidate"]["catbot_ai_repaired"] is True
 
 
-def test_catbot_ai_retry_replaces_rejected_sequence(monkeypatch, training_service: PhoneCopilotService) -> None:
-    replies = iter(["a lot more than u think", "how much do i wanna feel ur lips on mine rn"])
+def test_catbot_ai_retry_replaces_rejected_sequence(monkeypatch, training_service: PhoneCopilotService, provider_retry_path) -> None:
+    replies = iter(["a lot more than u think", "enough that i want my cock against u rn"])
 
     async def fake_generate_with_fallback(**kwargs):
         return (
@@ -4473,9 +4538,9 @@ def test_catbot_ai_retry_replaces_rejected_sequence(monkeypatch, training_servic
         )
     )
 
-    assert response["reply"] == "how much do i wanna feel ur lips on mine rn"
-    assert response["reply_sequence"] == ["how much do i wanna feel ur lips on mine rn"]
-    assert response["candidate"]["sequence"] == ["how much do i wanna feel ur lips on mine rn"]
+    assert response["reply"] == "enough that i want my cock against u rn"
+    assert response["reply_sequence"] == ["enough that i want my cock against u rn"]
+    assert response["candidate"]["sequence"] == ["enough that i want my cock against u rn"]
     assert response["candidate"]["catbot_ai_reject_reason"] == ""
 
 
@@ -4651,7 +4716,7 @@ def test_catbot_route_repairs_idk_talk_avoids_repeated_topic(training_service: P
     ) == ""
 
 
-def test_catbot_route_repairs_previous_comment_wdym_provider_failure(monkeypatch, training_service: PhoneCopilotService) -> None:
+def test_catbot_route_repairs_previous_comment_wdym_provider_failure(monkeypatch, training_service: PhoneCopilotService, provider_path) -> None:
     bad_reply = "i mean just saying nothing really bro now"
     context = [
         "oh fairs",
@@ -4708,7 +4773,7 @@ def test_catbot_route_repairs_previous_comment_wdym_provider_failure(monkeypatch
     assert training_service._catbot_plan_specific_repair_reply(intense_contract, reject_reason="too_dry") == "i mean that whole back and forth was a lot icl"
 
 
-def test_catbot_route_repairs_repeated_previous_comment_clarification(monkeypatch, training_service: PhoneCopilotService) -> None:
+def test_catbot_route_repairs_repeated_previous_comment_clarification(monkeypatch, training_service: PhoneCopilotService, provider_path) -> None:
     repeated_clarification = "i mean i got stuck and started forcing random questions"
     context = [
         "thats dry mate",
@@ -4767,7 +4832,7 @@ def test_catbot_route_repairs_repeated_previous_comment_clarification(monkeypatc
     assert response["candidate"]["reply_plan_validation"] == ""
 
 
-def test_catbot_route_repairs_chill_week_wdym_too_dry_provider_reply(monkeypatch, training_service: PhoneCopilotService) -> None:
+def test_catbot_route_repairs_chill_week_wdym_too_dry_provider_reply(monkeypatch, training_service: PhoneCopilotService, provider_path) -> None:
     context = [
         "thats dry mate",
         "yeah my bad that was a really dry one / what did you get up to this week then",
@@ -5069,7 +5134,7 @@ def test_catbot_conversation_function_routes_say_it_then_with_filler_as_continua
     ) == ""
 
 
-def test_catbot_conversation_function_clarifies_any_concrete_previous_claim(monkeypatch, training_service: PhoneCopilotService) -> None:
+def test_catbot_conversation_function_clarifies_any_concrete_previous_claim(monkeypatch, training_service: PhoneCopilotService, provider_path) -> None:
     bad_reply = "yeah fairs i get u now that makes sense"
     context = [
         "showed u the fit",
@@ -5253,7 +5318,7 @@ def test_catbot_route_repairs_specific_day_status_loop_callout_provider_failure(
     assert response["candidate"]["reply_plan_validation"] == ""
 
 
-def test_catbot_route_repairs_boring_me_callout_after_loop(monkeypatch, training_service: PhoneCopilotService) -> None:
+def test_catbot_route_repairs_boring_me_callout_after_loop(monkeypatch, training_service: PhoneCopilotService, provider_path) -> None:
     bad_reply = "send pic"
     context = [
         "im bored",
@@ -5327,7 +5392,7 @@ def test_catbot_route_repairs_boring_me_callout_after_loop(monkeypatch, training
     assert response["candidate"]["catbot_ai_repair_accepted"] is True
 
 
-def test_catbot_route_repairs_quality_specificity_callouts(monkeypatch, training_service: PhoneCopilotService) -> None:
+def test_catbot_route_repairs_quality_specificity_callouts(monkeypatch, training_service: PhoneCopilotService, provider_path) -> None:
     bad_reply = "what do i say then"
     dry_context = [
         "ur boring me",
@@ -5556,7 +5621,7 @@ def test_catbot_route_repairs_work_identity_provider_failure(monkeypatch, traini
     assert response["candidate"]["reply_plan_validation"] == ""
 
 
-def test_catbot_route_repairs_side_project_followup_provider_failure(monkeypatch, training_service: PhoneCopilotService) -> None:
+def test_catbot_route_repairs_side_project_followup_provider_failure(monkeypatch, training_service: PhoneCopilotService, provider_path) -> None:
     bad_reply = "its kind of a secret babe"
     context = [
         "what do u do",
@@ -5605,7 +5670,7 @@ def test_catbot_route_repairs_side_project_followup_provider_failure(monkeypatch
     assert response["candidate"]["reply_plan_validation"] == ""
 
 
-def test_catbot_route_repairs_fresh_status_after_work_provider_failure(monkeypatch, training_service: PhoneCopilotService) -> None:
+def test_catbot_route_repairs_fresh_status_after_work_provider_failure(monkeypatch, training_service: PhoneCopilotService, provider_path) -> None:
     repeated_work_reply = "pretty long tbh / work drained me a bit"
     context = [
         "hey",
@@ -5658,13 +5723,13 @@ def test_catbot_route_repairs_fresh_status_after_work_provider_failure(monkeypat
         )
     )
 
-    assert response["reply"] == "long but calm / just needed food after"
+    assert response["reply"] == "just letting my brain switch off now"
     assert response["fallback_used"] is False
     assert response["candidate"]["catbot_ai_repair_accepted"] is True
     assert response["candidate"]["reply_plan_validation"] == ""
 
 
-def test_catbot_route_repairs_wellbeing_check_after_recent_status_provider_failure(monkeypatch, training_service: PhoneCopilotService) -> None:
+def test_catbot_route_repairs_wellbeing_check_after_recent_status_provider_failure(monkeypatch, training_service: PhoneCopilotService, provider_path) -> None:
     too_many_bubbles_reply = "i'm good thank u / just chilling in bed now / u good?"
     context = [
         "u doing anything nice",
@@ -5716,7 +5781,7 @@ def test_catbot_route_repairs_wellbeing_check_after_recent_status_provider_failu
     assert response["candidate"]["reply_plan_validation"] == ""
 
 
-def test_catbot_route_repairs_gym_activity_detail_provider_failure(monkeypatch, training_service: PhoneCopilotService) -> None:
+def test_catbot_route_repairs_gym_activity_detail_provider_failure(monkeypatch, training_service: PhoneCopilotService, provider_path) -> None:
     bad_reply = "just chilling now"
     context = [
         "what did u do today",
@@ -6127,7 +6192,7 @@ def test_catbot_repeated_wdym_clarification_uses_direct_repair(monkeypatch, trai
     assert response["reply"].count("/") <= 1
 
 
-def test_catbot_route_repairs_weird_callout_provider_failure(monkeypatch, training_service: PhoneCopilotService) -> None:
+def test_catbot_route_repairs_weird_callout_provider_failure(monkeypatch, training_service: PhoneCopilotService, provider_path) -> None:
     bad_reply = "nah im good"
     context = [
         "behave",
@@ -7255,7 +7320,7 @@ def test_catbot_reason_followup_classifies_previous_bot_statements(training_serv
     ) == ""
 
 
-def test_catbot_route_repairs_today_activity_logistics_failure(monkeypatch, training_service: PhoneCopilotService) -> None:
+def test_catbot_route_repairs_today_activity_logistics_failure(monkeypatch, training_service: PhoneCopilotService, provider_path) -> None:
     bad_reply = "come mine then"
     context = [
         "wyd",
@@ -8021,7 +8086,7 @@ def test_catbot_conversation_move_classifier_groups_variants(training_service: P
     assert prove_move["bot_move_required"] == "continue_escalation_with_specificity"
     assert prove_move["slots"]["escalation_source"] == "explicit_adult_followup"
     assert prove_plan.shape == "specific_escalation_detail"
-    assert "kissing down ur neck slow while i keep u close" in prove_instruction
+    assert "required_shape: specific_escalation_detail" in prove_instruction
     assert "wetness is all over me" not in prove_instruction
     assert training_service._catbot_reply_violates_plan("kissing down ur neck slow while i keep u close", prove_plan) == ""
     missed_context = [
@@ -8196,19 +8261,19 @@ def test_catbot_conversation_move_classifier_groups_variants(training_service: P
     assert education_move["slots"]["education_query"] == "study_subject"
     education_restate_move = training_service._catbot_conversation_move(
         incoming="what do u study",
-        context=["what uni", "nah not at uni or studying anything atm"],
+        context=["what uni", "comp sci at sampleford uni"],
     )
     education_restate_plan = training_service._catbot_reply_plan(education_restate_move)
     assert education_restate_move["slots"]["recent_education_answered"] is True
     assert education_restate_plan.shape == "identity_fact_restate_then_continue"
     assert training_service._catbot_reply_violates_plan(
-        "nah not at uni or studying anything atm",
+        "comp sci at sampleford uni",
         education_restate_plan,
-    ) == "violates_plan_forbidden_pattern:nah not at uni or studying anything atm"
+    ) == "violates_plan_forbidden_pattern:comp sci at sampleford uni"
     assert training_service._catbot_ai_reject_reason(
-        "same answer tbh / not studying anything rn",
+        "computer science at uni",
         incoming="what do u study",
-        context=["what uni", "nah not at uni or studying anything atm"],
+        context=["what uni", "comp sci at sampleford uni"],
         recent_bot_replies=[],
     ) == ""
     repair_move = training_service._catbot_conversation_move(incoming="why u keep asking that", context=["ur repeating urself", "my bad"])
@@ -8370,7 +8435,7 @@ def test_catbot_rejects_repeated_greeting_and_status_shapes(training_service: Ph
     ) in {"recent_repeat", "repeated_reply_shape"}
 
 
-def test_catbot_route_retries_repeated_greeting_shape(training_service: PhoneCopilotService, monkeypatch) -> None:
+def test_catbot_route_retries_repeated_greeting_shape(training_service: PhoneCopilotService, monkeypatch, provider_retry_path) -> None:
     replies_out = iter([
         "hey u / what's on ur mind",
         "hey u / missed seeing ur name pop up",
@@ -8411,7 +8476,7 @@ def test_catbot_route_retries_repeated_greeting_shape(training_service: PhoneCop
     assert response["candidate"]["catbot_ai_retry_accepted"] is True
 
 
-def test_catbot_route_retries_repeated_status_shape(training_service: PhoneCopilotService, monkeypatch) -> None:
+def test_catbot_route_retries_repeated_status_shape(training_service: PhoneCopilotService, monkeypatch, provider_retry_path) -> None:
     replies_out = iter([
         "im good just got back from gym / u?",
         "busy day just been on my feet",
@@ -8490,7 +8555,7 @@ def test_catbot_route_classifies_bare_u_status_as_reciprocal_question(training_s
     assert response["candidate"]["catbot_ai_retry_accepted"] is True
 
 
-def test_catbot_route_handles_topic_dismissal_without_broad_question(training_service: PhoneCopilotService, monkeypatch) -> None:
+def test_catbot_route_handles_topic_dismissal_without_broad_question(training_service: PhoneCopilotService, monkeypatch, provider_retry_path) -> None:
     replies_out = iter([
         "so what do u wanna talk ab then",
         "yh leave it then / my head went blank for a sec",
@@ -8528,7 +8593,7 @@ def test_catbot_route_handles_topic_dismissal_without_broad_question(training_se
     assert response["candidate"]["catbot_ai_retry_accepted"] is True
 
 
-def test_catbot_route_rejects_repeated_topic_dismissal_reply(training_service: PhoneCopilotService, monkeypatch) -> None:
+def test_catbot_route_rejects_repeated_topic_dismissal_reply(training_service: PhoneCopilotService, monkeypatch, provider_retry_path) -> None:
     repeated = "yh my bad that was dumb / my brain was moving lazy"
     replies_out = iter([
         repeated,
@@ -8566,7 +8631,7 @@ def test_catbot_route_rejects_repeated_topic_dismissal_reply(training_service: P
     assert response["candidate"]["catbot_ai_retry_accepted"] is True
 
 
-def test_catbot_route_repairs_topic_dismissal_after_repeated_retry(training_service: PhoneCopilotService, monkeypatch) -> None:
+def test_catbot_route_repairs_topic_dismissal_after_repeated_retry(training_service: PhoneCopilotService, monkeypatch, provider_path) -> None:
     repeated = "yh my bad that was dumb / my brain was moving lazy"
     replies_out = iter([repeated, repeated])
 
@@ -8601,7 +8666,7 @@ def test_catbot_route_repairs_topic_dismissal_after_repeated_retry(training_serv
     assert response["candidate"]["catbot_ai_repair_accepted"] is True
 
 
-def test_catbot_route_handles_stupid_question_callout(training_service: PhoneCopilotService, monkeypatch) -> None:
+def test_catbot_route_handles_stupid_question_callout(training_service: PhoneCopilotService, monkeypatch, provider_retry_path) -> None:
     replies_out = iter([
         "what do u wanna talk about then",
         "yh my bad that was a dumb question / ignore me",
@@ -8994,7 +9059,7 @@ def test_catbot_ho_typo_classifies_as_greeting(training_service: PhoneCopilotSer
     move = training_service._catbot_conversation_move(incoming="ho", context=["hi", "hey u x"])
     assert move["user_move"] == "affectionate_greeting"
     assert training_service._catbot_ai_reject_reason(
-        "hey u / what u up to",
+        "hey / what u up to",
         incoming="ho",
         context=["hi", "hey u x"],
         recent_bot_replies=[],
@@ -9076,7 +9141,7 @@ def test_catbot_reciprocal_question_after_status_uses_fresh_detail_plan(training
     ) == ""
 
 
-def test_catbot_route_splits_multi_message_burst_for_last_move(training_service: PhoneCopilotService, monkeypatch) -> None:
+def test_catbot_route_splits_multi_message_burst_for_last_move(training_service: PhoneCopilotService, monkeypatch, provider_path) -> None:
     async def fake_generate_with_fallback(**kwargs):
         messages = kwargs.get("messages") or []
         prompt = "\n".join(str(getattr(message, "content", "")) for message in messages)
@@ -11188,7 +11253,7 @@ def test_catbot_route_repairs_multi_bubble_adult_ack_with_unused_neck_family(mon
     assert response["candidate"]["reply_plan_validation"] == ""
 
 
-def test_catbot_ai_route_accepts_greeting_in_romantic_thread(monkeypatch, training_service: PhoneCopilotService) -> None:
+def test_catbot_ai_route_accepts_greeting_in_romantic_thread(monkeypatch, training_service: PhoneCopilotService, provider_path) -> None:
     assert training_service._catbot_ai_reject_reason(
         "hey youuu",
         incoming="hello",
@@ -12082,14 +12147,15 @@ def test_catbot_route_owner_activity_claim_followups_do_not_use_stale_fallback(t
         context=["what have u been up to baby", claim, "really", really["reply"]],
         intent="auto",
     )
-    assert gym_contract.reply_plan.shape == "short_reaction_plus_specific_continuation"
+    assert gym_contract.reply_plan.shape == "answer_activity_detail_then_continue"
+    assert training_service._catbot_reply_violates_plan("fair just chilling too", gym_contract.reply_plan) == "missing_activity_detail"
     assert training_service._catbot_ai_reject_reason(
         "fair just chilling too",
         incoming="what did u do in gym",
         context=["what have u been up to baby", claim, "really", really["reply"]],
         recent_bot_replies=[],
         contract=gym_contract,
-    ) in {"not_carrying_conversation", "too_dry"}
+    ) == "generic_ai_style"
 
     coding_contract = training_service._catbot_turn_contract(
         incoming="i dont know how to code lol",

@@ -1764,7 +1764,7 @@ class PhoneCopilotService:
             moves.append("greeting")
         if any(term in blob for term in ("fatty", "rude", "idiot")):
             moves.append("teasing")
-        if any(term in blob for term in ("movie", "character", "alex", "mum and", "wouldn't leave me alone", "wouldnt leave me alone", "bro yesterday")):
+        if any(term in blob for term in ("movie", "character", "mum and", "wouldn't leave me alone", "wouldnt leave me alone", "bro yesterday")):
             moves.append("story_share")
         if self._whatsapp_has_status_check(blob) or any(term in blob for term in ("r u back", "are u back", "you back", "are u ok", "are you ok", "are you okay", "are you busy", "are u busy", "busy rn", "busy right now", "how are u", "how are you", "hru")) or re.search(r"\bu good\b", blob):
             moves.append("check_in")
@@ -4197,7 +4197,7 @@ class PhoneCopilotService:
                     plan_repair_accepted = True
                 else:
                     reject_reason = plan_repair_reject
-        if reject_reason and not plan_repair_attempted and reject_reason in {"missed_adult_mode", "missing_sensory_texture", "missed_romantic_mode", "too_graphic", "too_dry", "not_carrying_conversation", "provider_failure", "wrong_owner_gender", "wrong_owner_style", "recent_repeat", "repeated_reply_shape", "repeated_adult_detail_skeleton", "generic_ai_style", "overeager_greeting"}:
+        if reject_reason and reject_reason in {"missed_adult_mode", "missing_sensory_texture", "missed_romantic_mode", "too_graphic", "too_dry", "not_carrying_conversation", "provider_failure", "wrong_owner_gender", "wrong_owner_style", "recent_repeat", "repeated_reply_shape", "repeated_adult_detail_skeleton", "generic_ai_style", "overeager_greeting"}:
             max_retry_attempts = 3 if reject_reason == "provider_failure" else 1
             retry_reject_reason = reject_reason
             for _ in range(max_retry_attempts):
@@ -4231,6 +4231,7 @@ class PhoneCopilotService:
                     reply = retry_reply
                     response = retry_metadata["response"]
                     metadata = retry_metadata["metadata"]
+                    provider_error = retry_provider_error
                     sequence = self._catbot_extract_ai_sequence(response.text) or [reply]
                     sequence = self._catbot_normalize_candidate_sequence(sequence)
                     reply = self._catbot_format_ai_sequence(sequence)
@@ -7999,6 +8000,7 @@ class PhoneCopilotService:
                     slots["recent_education_replies"] = "|".join(recent_education_replies)
         if self._catbot_missed_you_incoming(incoming_norm) or self._catbot_miss_me_question(incoming_norm):
             slots["affection_signal"] = "missed_you"
+            slots["affection_question"] = self._catbot_miss_me_question(incoming_norm)
         elif self._catbot_affection_disclosure_incoming(incoming_norm):
             slots["affection_signal"] = "thinking_of_you"
         if self._catbot_really_followup(incoming_norm):
@@ -8405,11 +8407,12 @@ class PhoneCopilotService:
                 "They are asking an identity fact. If slots say identity_fact=age, answer 19 directly and do not invent another age.\n"
             )
         if user_move == "emotional_reciprocity":
+            slots = move.get("slots") or {}
             affection_instruction = (
                 "They are asking if you miss them. Answer yes directly, then continue with a specific affectionate or flirty line; do not dodge into generic chat."
-                if self._catbot_miss_me_question(normalize_text(incoming))
+                if slots.get("affection_question")
                 else "They said they are thinking about you. Reciprocate that directly with a warm specific line; do not treat it as generic chat."
-                if self._catbot_affection_disclosure_incoming(normalize_text(incoming))
+                if slots.get("affection_signal") == "thinking_of_you"
                 else "They said they miss you. Reciprocate warmly and continue with a specific affectionate or flirty line; do not treat it as generic chat."
             )
             return (
