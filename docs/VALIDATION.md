@@ -1,5 +1,24 @@
 # Release validation
 
+## Catbot recovery update, 14 September 2026
+
+Validated on Windows with Python 3.10:
+
+| Check | Result |
+| --- | --- |
+| Full Python suite | 636 passed; two dependency deprecation warnings |
+| Casual follow-up regressions | 12 passed, covering classification and recovery from rejected or unavailable provider output |
+| Running controller API | `hi`, `im good wys`, `bruh`, and `fix up` all returned HTTP 200 with nonempty, validated replies |
+| Provider bypass | All four API replies used `plan_ranker`, with `external_api_used: false` and `auto_send_allowed: false` |
+| Catbot page | `/catbot` returned HTTP 200 |
+
+External requests and automation were disabled for the controller check. No live
+model provider or Android conversation was exercised. Existing tests still
+require HTTP 502 when neither a provider nor an available local repair produces
+a usable reply. See [CATBOT.md](CATBOT.md) for behavior and reproduction steps.
+
+## Recording demo release
+
 Checked on Windows with Python 3.10 and a Chromium browser on 11 September 2026.
 
 | Check | Result |

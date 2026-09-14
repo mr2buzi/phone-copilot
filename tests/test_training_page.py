@@ -84,6 +84,77 @@ def provider_retry_path(training_service: PhoneCopilotService, monkeypatch, prov
     monkeypatch.setattr(training_service, "_catbot_plan_specific_repair_reply", lambda *args, **kwargs: "")
 
 
+@pytest.mark.parametrize(("incoming", "expected_move"), [
+    ("im good wys", "reciprocal_question"),
+    ("WYS?", "reciprocal_question"),
+    ("im good, what you saying", "reciprocal_question"),
+    ("what u saying then", "reciprocal_question"),
+    ("bruh", "repair_callout"),
+    ("bruh icl", "repair_callout"),
+    ("fix up", "repair_callout"),
+    ("fix up then", "repair_callout"),
+])
+def test_catbot_casual_followup_classification(training_service, incoming, expected_move) -> None:
+    contract = training_service._catbot_turn_contract(
+        incoming=incoming, context=["hi", "hey u alright"], intent="auto",
+    )
+    assert contract.reply_plan.move == expected_move
+
+
+@pytest.mark.parametrize("provider_reply", ["Tell me more", "okay", ""])
+def test_catbot_casual_followups_recover_from_rejected_provider(
+    training_service, monkeypatch, provider_path, provider_reply,
+) -> None:
+    async def generate(**kwargs):
+        failed = not provider_reply
+        return (
+            type("FakeResponse", (), {
+                "text": provider_reply,
+                "provider": "fallback" if failed else "gemini",
+                "model": "fake-model",
+                "latency_ms": 1,
+                "error": "temporary outage" if failed else None,
+                "external_api_used": not failed,
+            })(),
+            {"provider_configured": True, "manual_review_fallback": failed},
+        )
+
+    monkeypatch.setattr("apps.controller.service.generate_with_fallback", generate)
+    context = ["hi", "hey u alright"]
+    replies = []
+    thread_id = "casual-followup-regression"
+    for incoming, expected_move in [
+        ("im good wys", "reciprocal_question"),
+        ("bruh", "repair_callout"),
+        ("fix up", "repair_callout"),
+    ]:
+        response = training_service.training_catbot_chat(CatbotChatRequest(
+            incoming=incoming, context=context, thread_id=thread_id,
+            relationship_type="romantic_interest",
+        ))
+        reply = response["reply"]
+        assert reply and reply not in replies
+        assert response["candidate"]["reply_plan_move"] == expected_move
+        assert response["candidate"]["catbot_ai_reject_reason"] == ""
+        assert response["candidate"]["auto_send_allowed"] is False
+        assert response["adb_touched"] is False
+        assert training_service._catbot_ai_reject_reason(
+            reply, incoming=incoming, context=context, recent_bot_replies=replies,
+        ) == ""
+        context.extend([incoming, reply])
+        replies.append(reply)
+
+
+def test_catbot_bare_reaction_does_not_override_story_context() -> None:
+    assert predict_conversation_function(incoming="bruh", context=[]).function != "quality_complaint"
+    assert predict_conversation_function(
+        incoming="bruh", context=["some guy ran in my living room", "did he just run out after"],
+    ).function != "quality_complaint"
+    assert predict_conversation_function(
+        incoming="i need to fix up my bike", context=["hi", "hey u alright"],
+    ).function != "quality_complaint"
+
+
 @pytest.mark.parametrize("local_reply", ["", "okay"])
 @pytest.mark.parametrize("provider_failed", [False, True])
 def test_catbot_provider_retry_recovers_after_unusable_plan(

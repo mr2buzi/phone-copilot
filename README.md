@@ -75,6 +75,7 @@ Current local result: **all tests pass**. The simulator, policy, provider, execu
 ## Project notes
 
 - [Architecture and tradeoffs](docs/ARCHITECTURE.md)
+- [Catbot conversation recovery and troubleshooting](docs/CATBOT.md)
 - [Recording outline and technical walkthrough](docs/DEMO.md)
 - [Public data boundary](docs/PRIVACY.md)
 - [Security reporting](SECURITY.md)

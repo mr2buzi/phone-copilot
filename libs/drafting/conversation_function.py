@@ -159,6 +159,14 @@ def predict_conversation_function(*, incoming: str, context: list[str]) -> Conve
     if _contains_any(incoming_norm, ("thats dry", "that's dry", "that is dry", "ur dry", "youre dry", "you're dry", "being dry", "boring me", "ur boring", "u boring", "youre boring", "you're boring", "dead reply", "too vague", "being vague")):
         score("quality_complaint", 0.94, "user complains the reply quality is dry or vague", {"repair_target": "dry_or_unclear_reply"})
 
+    brief_repair_request = bool(re.fullmatch(r"fix up(?: then)?", incoming_function_clean))
+    brief_confusion = incoming_function_clean == "bruh" and bool(previous_bot_norm) and not _story_context(context_blob)
+    if brief_repair_request or brief_confusion:
+        score(
+            "quality_complaint", 0.94, "short callout asks the bot to repair its reply",
+            {"repair_target": "dry_or_unclear_reply", "quality_callout_type": "brief_callout"},
+        )
+
     if incoming_clean in {"what would u do", "what would you do", "what would u do then", "what would you do then"} and _story_context(context_blob):
         score("story_hypothetical", 0.93, "user asks how the bot would react to the current story", {"story_function": "hypothetical_reaction"})
 

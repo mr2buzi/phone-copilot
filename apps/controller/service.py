@@ -4323,7 +4323,7 @@ class PhoneCopilotService:
         }:
             return True
         if plan.shape == "answer_status_then_continue":
-            return reject_reason in {"provider_failure", "recent_repeat", "repeated_reply_shape"}
+            return self._catbot_casual_activity_question(normalize_text(contract.incoming)) or reject_reason in {"provider_failure", "recent_repeat", "repeated_reply_shape"}
         if plan.shape in {
             "confirm_with_specificity",
             "reciprocate_affection_plus_specific_continuation",
@@ -4402,7 +4402,7 @@ class PhoneCopilotService:
             return True
         if plan.shape == "answer_status_then_continue":
             incoming_norm = normalize_text(contract.incoming)
-            return any(term in incoming_norm for term in ("hru", "how are u", "how are you", "how u doing", "how you doing", "wby", "wbu", "what about u", "what about you"))
+            return self._catbot_casual_activity_question(incoming_norm) or any(term in incoming_norm for term in ("hru", "how are u", "how are you", "how u doing", "how you doing", "wby", "wbu", "what about u", "what about you"))
         if plan.move in {
             "affectionate_greeting",
             "loop_callout",
@@ -5192,7 +5192,7 @@ class PhoneCopilotService:
             if plan.required_slots.get("owner_activity_question") == "recent_activity":
                 return "mostly uni and this side project icl"
             incoming_norm = normalize_text(contract.incoming)
-            if reject_reason == "repeated_reply_shape" or any(term in incoming_norm for term in ("wby", "wbu", "what about u", "what about you")):
+            if reject_reason == "repeated_reply_shape" or self._catbot_casual_activity_question(incoming_norm) or any(term in incoming_norm for term in ("wby", "wbu", "what about u", "what about you")):
                 return first_fresh([
                     "was working on my side project for a bit / chilling now",
                     "just been on my laptop sorting something / calm now",
@@ -5313,6 +5313,12 @@ class PhoneCopilotService:
             if plan.required_slots.get("repair_target") == "specificity_request":
                 return "yh fair / i was being vague and making u carry it"
             if plan.required_slots.get("repair_target") == "dry_or_unclear_reply":
+                if plan.required_slots.get("quality_callout_type") == "brief_callout":
+                    return first_fresh([
+                        "my bad / im just on my phone waiting for food",
+                        "yh fair / i was being lazy with it",
+                        "yeah ur right / my head went blank for a sec",
+                    ])
                 if plan.required_slots.get("quality_callout_type") == "dry":
                     return "yh fair / i was being lazy with it"
                 if plan.required_slots.get("quality_callout_type") == "vague":
@@ -6811,7 +6817,12 @@ class PhoneCopilotService:
         recent_activity_context = any(term in " ".join(normalize_text(item) for item in context[-6:]) for term in activity_terms)
         return bool(re.search(r"\b(?:hate it|dont like it|don't like it|cant stand it|can't stand it)\b", incoming_norm) and recent_activity_context)
 
+    def _catbot_casual_activity_question(self, incoming_norm: str) -> bool:
+        return bool(re.search(r"\b(?:wys|what (?:u|you) saying)\b", incoming_norm))
+
     def _catbot_reciprocal_activity_question(self, incoming_norm: str) -> bool:
+        if self._catbot_casual_activity_question(incoming_norm):
+            return True
         incoming_clean = incoming_norm.strip(" .?!")
         status_then_bare_u = re.search(
             r"\b(?:im|i'm|i\s+am|just|been|still)?\s*"
@@ -7974,7 +7985,7 @@ class PhoneCopilotService:
             slots["repair_target"] = "specificity_request"
         elif conversation_function.function == "quality_complaint" and conversation_function.score >= 0.85:
             slots["repair_target"] = "dry_or_unclear_reply"
-            slots["quality_callout_type"] = self._catbot_quality_callout_type(incoming_norm)
+            slots["quality_callout_type"] = slots.get("quality_callout_type") or self._catbot_quality_callout_type(incoming_norm)
         context_blob = " ".join(normalize_text(item) for item in context[-10:])
         repeated_reset_topic = self._catbot_repeated_reset_topic(context)
         repeated_reset_question_loop = self._catbot_repeated_reset_question_loop(context)
